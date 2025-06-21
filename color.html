@@ -277,65 +277,68 @@
       }, 2000);
     }
 
-    function predictNext() {
-      const input = document.getElementById("inputNumbers").value;
-      const nums = input.split(',').map(n => parseInt(n.trim()));
-      const output = document.getElementById("output");
+   function predictNext() {
+  const input = document.getElementById("inputNumbers").value;
+  const nums = input.split(',').map(n => parseInt(n.trim()));
+  const output = document.getElementById("output");
 
-      if (nums.length !== 5 || nums.some(n => isNaN(n) || n < 0 || n > 10)) {
-        output.innerHTML = "❌ Please enter exactly 5 numbers between 0 and 10.";
-        return;
-      }
+  if (nums.length !== 5 || nums.some(n => isNaN(n) || n < 0 || n > 10)) {
+    output.innerHTML = "❌ Please enter exactly 5 numbers between 0 and 10.";
+    return;
+  }
 
-      output.innerHTML = `<div class="predicting text-glow">🔮 Predicting<span id="dots">.</span></div>`;
-      let dotCount = 1;
-      const dotsInterval = setInterval(() => {
-        dotCount = (dotCount % 3) + 1;
-        document.getElementById("dots").innerText = ".".repeat(dotCount);
-      }, 400);
+  output.innerHTML = `<div class="predicting text-glow">🔮 Predicting<span id="dots">.</span></div>`;
+  let dotCount = 1;
+  const dotsInterval = setInterval(() => {
+    dotCount = (dotCount % 3) + 1;
+    document.getElementById("dots").innerText = ".".repeat(dotCount);
+  }, 400);
 
+  setTimeout(() => {
+    clearInterval(dotsInterval);
+
+    const weights = [1, 2, 3, 4, 5];
+    const weightedFreq = Array(11).fill(0);
+
+    nums.forEach((num, i) => {
+      weightedFreq[num] += weights[i];
+    });
+
+    const minFreq = Math.min(...weightedFreq.filter(f => f > 0));
+    const rareNums = weightedFreq.map((f, i) => f === minFreq ? i : -1).filter(n => n !== -1);
+    const unusedNums = weightedFreq.map((f, i) => f === 0 ? i : -1).filter(n => n !== -1);
+
+    let predictionPool = unusedNums.length ? unusedNums : rareNums;
+    const predicted = predictionPool[Math.floor(Math.random() * predictionPool.length)];
+    const likelyType = predicted <= 5 ? "Small" : "Big";
+
+    output.innerHTML = `
+      Unused: <span class="highlight">${unusedNums.join(', ') || 'None'}</span><br>
+      Rare Pool: <span class="highlight">${rareNums.join(', ')}</span><br><br>
+      Prediction: <span class="highlight">${likelyType}</span><br>
+      Predicted Next Number: <span class="highlight">${predicted} (${likelyType})</span>
+    `;
+
+    const historyList = document.getElementById("historyList");
+    const historyItem = `
+      <li>
+        ➤ Input: [${nums.join(', ')}] |
+        Prediction: <b>${likelyType}</b> |
+        Result: <b>${predicted} (${likelyType})</b>
+      </li>
+    `;
+    historyList.innerHTML = historyItem + historyList.innerHTML;
+
+    roundCounter++;
+    if (roundCounter >= 5) {
       setTimeout(() => {
-        clearInterval(dotsInterval);
-
-        const frequency = Array(11).fill(0);
-        nums.forEach(n => frequency[n]++);
-
-        const minFreq = Math.min(...frequency.filter(f => f > 0));
-        const rareNums = frequency.map((f, i) => f === minFreq ? i : -1).filter(n => n !== -1);
-        const unusedNums = frequency.map((f, i) => f === 0 ? i : -1).filter(n => n !== -1);
-
-        let predictionPool = unusedNums.length ? unusedNums : rareNums;
-        const predicted = predictionPool[Math.floor(Math.random() * predictionPool.length)];
-        const likelyType = predicted <= 5 ? "Small" : "Big";
-
-        output.innerHTML = `
-          Unused: <span class="highlight">${unusedNums.join(', ') || 'None'}</span><br>
-          Rare Pool: <span class="highlight">${rareNums.join(', ')}</span><br><br>
-          Prediction: <span class="highlight">${likelyType}</span><br>
-          Predicted Next Number: <span class="highlight">${predicted}</span> (${likelyType})
-        `;
-
-        const historyList = document.getElementById("historyList");
-        const historyItem = `
-          <li>
-            ➤ Input: [${nums.join(', ')}] |
-            Prediction: <b>${likelyType}</b> |
-            Result: <b>${predicted} (${likelyType})</b>
-          </li>
-        `;
-        historyList.innerHTML = historyItem + historyList.innerHTML;
-
-        roundCounter++;
-
-        if (roundCounter >= 5) {
-          setTimeout(() => {
-            document.getElementById("historyList").innerHTML = "";
-            roundCounter = 0;
-            showToast();
-          }, 500);
-        }
-      }, 2000);
+        document.getElementById("historyList").innerHTML = "";
+        roundCounter = 0;
+        showToast();
+      }, 500);
     }
+  }, 2000);
+}
 
     function toggleTheme() {
       document.body.classList.toggle("light-mode");
